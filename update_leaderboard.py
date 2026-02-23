@@ -45,34 +45,34 @@ if os.path.exists(submissions_dir):
 if leaderboard_data:
     df = pd.DataFrame(leaderboard_data)
     
-    # 1. Standardize names and remove hidden spaces
+    # Standardize names and remove hidden spaces
     df.columns = df.columns.str.strip().str.upper()
     
-    # 2. FIX: This line prevents the 'TEAM is not unique' error
-    # It removes any duplicate columns caused by case-mismatch during merge
+    # FIX: Remove duplicate columns if they exist
     df = df.loc[:, ~df.columns.duplicated()]
 
-    # 3. Ensure MAE is numeric
+    # Force MAE to be numeric
     df['MAE'] = pd.to_numeric(df['MAE'], errors='coerce')
     
-    # 4. Sort and Rank
+    # Sort and Rank
     df = df.dropna(subset=['MAE']).sort_values(by=["MAE", "TEAM"])
     df['RANK'] = df['MAE'].rank(method='dense').astype(int)
     
     leaderboard_df = df[['RANK', 'TEAM', 'MAE']]
     leaderboard_df.columns = ['Rank', 'Team', 'MAE']
 
-    # 5. Save Files
+    # 5. Save CSV & Markdown
     os.makedirs('leaderboard', exist_ok=True)
     leaderboard_df.to_csv(csv_path, index=False)
     
+    # This line triggered the 'tabulate' error - step 1 fixes this!
     with open('leaderboard/LEADERBOARD.md', 'w') as f:
         f.write("# 🏆 Full Competition History\n\n" + leaderboard_df.to_markdown(index=False))
 
-    # 6. Generate HTML inside docs/
+    # 6. Generate HTML for GitHub Pages (Moving to docs/)
     os.makedirs('docs', exist_ok=True)
     html_table = leaderboard_df.to_html(classes='table table-hover text-center', index=False)
-
+    
     html_content = f"""
     <!DOCTYPE html>
     <html lang="en">

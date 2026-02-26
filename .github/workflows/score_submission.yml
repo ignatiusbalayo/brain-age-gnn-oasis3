@@ -33,43 +33,29 @@ jobs:
           TEST_LABELS: ${{ secrets.TEST_LABELS }}
           RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
         run: |
-          # 1. Get ALL changed .enc files, ordered by most recent commit first
-          ALL_FILES=$(git log --name-only --format="" origin/main...HEAD | grep 'submissions/.*\.enc$' | uniq)
-          
-          # 2. Select the absolute latest one (top of the list)
-          FILE=$(echo "$ALL_FILES" | head -n 1)
-          
+          # 1. Get files with their commit timestamps, sorted by newest (largest timestamp) first
+          # This looks at all commits unique to this PR branch
+          ALL_FILES_WITH_TIME=$(git log --format="%ct" --name-only origin/main...HEAD | awk 'NF==1 {t=$1; next} {print t, $0}' | grep '\.enc$' | sort -nr)
+
+          # 2. Extract just the filename of the most recent one (top of the sorted list)
+          FILE=$(echo "$ALL_FILES_WITH_TIME" | head -n 1 | awk '{print $2}')
+
+          # 3. Get a unique list of all .enc files to check for multiples
+          UNIQUE_FILES=$(echo "$ALL_FILES_WITH_TIME" | awk '{print $2}' | sort -u)
+          COUNT=$(echo "$UNIQUE_FILES" | wc -l)
+
           if [ -z "$FILE" ]; then
             echo "No .enc file detected."
             exit 1
           fi
 
-          # 3. Check for multiples to add a note to the PR
-          COUNT=$(echo "$ALL_FILES" | wc -l)
+          # 4. Create the warning if multiples exist
           if [ "$COUNT" -gt 1 ]; then
-            MULTIPLE_NOTE="⚠️ **Note:** Multiple submission files detected in this PR. Only the most recent file (\`$FILE\`) was evaluated."
+            MULTIPLE_NOTE="⚠️ **Note:** $COUNT submission files were detected. We evaluated the most recently committed file: \`$FILE\`."
           else
             MULTIPLE_NOTE=""
           fi
           echo "multi_note=$MULTIPLE_NOTE" >> $GITHUB_OUTPUT
-
-          # 4. Extract Team Name
-          FILENAME=$(basename "$FILE")
-          TEAM_NAME="${FILENAME%.*}"
-          echo "team_name=$TEAM_NAME" >> $GITHUB_OUTPUT
-          
-          # 5. Run the evaluation
-          python competition/evaluate.py --file "$FILE" | tee out.txt
-          
-          # 6. Extract score
-          RAW_SCORE=$(grep "SCORE_MAE" out.txt | awk '{print $2}')
-          
-          if [ -z "$RAW_SCORE" ] || [ "$RAW_SCORE" == "None" ]; then
-            echo "score=Error Computing Score" >> $GITHUB_OUTPUT
-          else
-            FORMATTED_SCORE=$(printf "%.8f" $RAW_SCORE)
-            echo "score=$FORMATTED_SCORE" >> $GITHUB_OUTPUT
-          fi
 
       - name: Post Score to PR
         uses: mshick/add-pr-comment@v2
@@ -80,8 +66,6 @@ jobs:
             
             **Team:** `${{ steps.eval.outputs.team_name }}`
             **Score (MAE):** `${{ steps.eval.outputs.score }}`
-            
-            ${{ steps.eval.outputs.multi_note }}
             
             ---
             *Note: The official leaderboard will update automatically once this Pull Request is merged into the main branch.*

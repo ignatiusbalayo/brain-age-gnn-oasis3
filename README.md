@@ -74,7 +74,7 @@ Each MRI session is represented as a graph:
 │   ├── leaderboard.csv
 │   └── leaderboard.md
 │
-├── 
+├── update_leaderboard.py
 └── README.md
 
 ```
@@ -137,8 +137,6 @@ Generate a `predictions.csv` file with **exactly two columns**:
 | Test_Sub_001-Sess_02   | 66.35320381     |
 | Test_Sub_002-Sess_01   | 63.15323790     |
 
-> 💡 A template is provided at: `data/public/sample_submission.csv`
-
 ### 2. Install Encryption Dependencies
 Ensure you have the required cryptography library installed in your local environment:
 ```bash
@@ -151,21 +149,18 @@ You must use the provided public key keys/public_key.pem to encrypt your results
     python submissions/encrypt_submission.py \
         --input path/to/your/predictions.csv \
         --key keys/public_key.pem \
-        --output submissions/<your_team_name>/predictions.enc
+        --output submissions/<team_name>.enc
 ```
-   This will generate an encrypted file ```predictions.enc```
+   This will generate an encrypted file ```<team_name>.enc```
 
 ### 5. Submit via Pull Request
 1. **Fork** this repository.
-2. **Create a folder** named after your team: `submissions/<your_team_name>/`.
-3. **Upload** exactly two files:
-    * `predictions.enc` (The encrypted file you generated)
-    * `metadata.json`
+2. **Upload** your encrypted predictions file `<team_name>.enc`.
 4. Open a Pull Request (PR).
    
 ### 6. Automated Scoring
 * Wait ~1-2 minutes. Bot will use a securely stored private key to decrypt and score your submission.
-* The bot will calculate your **Mean Absolute Error (MAE)** and post it as a comment directly on your PR!
+* The bot will calculate your **Mean Absolute Error (MAE)** upto 8 decimal places and post it as a comment directly on your PR!
 * Once your PR is merged, your results will be officially added to the leaderboard.
    
 ---

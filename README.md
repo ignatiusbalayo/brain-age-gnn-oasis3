@@ -45,30 +45,28 @@ Each MRI session is represented as a graph:
 |   └── validate_submission.py
 |
 ├── data/
-│   ├── public/
-│   │   ├── adjacency_matrices
-│   │   |    ├── OAS30001_d0757.csv
-│   │   |    ├── OAS30001_d3132.csv
-│   │   |    ├── ...
-│   │   |
-│   │   ├── train_data.csv
-│   │   ├── val_data.csv
-│   │   └── test_data.csv
-│   │
-│   └── sample/
-│       └── predictions.csv   
+│   └── public/
+│       ├── adjacency_matrices
+│       |    ├── OAS30001_d0757.csv
+│       |    ├── OAS30001_d3132.csv
+│       |    ├── ...
+│       |
+│       ├── train_data.csv
+│       ├── val_data.csv
+│       └── test_data.csv
+│      
 |
 ├── docs/
 │   ├── leaderboard.css
 │   ├── leaderboard.html
 │   └── leaderboard.js
 |
-├── keys/
-│    └──public_key.pem               # Use this key during encryption step
+├── encryption/
+│    └── public_key.pem               # Use this public key during encryption step
+|    └── encrypt_submission.py        # Script for participants to encrypt their submission file
 │
 ├── submissions/
 │   ├── <team_name>.enc              # Your encrypted prediction file
-│   └── encrypt_submission.py        # Script for participants to encrypt their submission file
 │
 ├── leaderboard/
 │   ├── leaderboard.csv
@@ -145,16 +143,16 @@ pip install pycryptodome pandas
 ### 3. Encrypt Your Submission
 You must use the provided public key keys/public_key.pem to encrypt your results. Run the encryption script as follows:
 ```bash
-    python submissions/encrypt_submission.py \
+    python encryption/encrypt_submission.py \
         --input path/to/your/predictions.csv \
-        --key keys/public_key.pem \
+        --key encrypt/public_key.pem \
         --output submissions/<team_name>.enc
 ```
    This will generate an encrypted file ```<team_name>.enc```
 
 ### 5. Submit via Pull Request
 1. **Fork** this repository.
-2. **Upload** your encrypted predictions file `<team_name>.enc`.
+2. **Upload** your encrypted predictions file `<team_name>.enc` under `submissions` folder.
 4. Open a Pull Request (PR).
    
 ### 6. Automated Scoring
